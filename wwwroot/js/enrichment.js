@@ -5,6 +5,7 @@ function initVehicleLookup() {
     $("#inputLookupMotorcycle").on("change", function () {
         loadMakeSuggestions();
         loadModelSuggestions();
+        refreshSpecFields();
     });
     $("#inputVin").on("input", function () {
         this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -61,11 +62,38 @@ function lookupVin() {
         setVinLookupMessage("VIN lookup failed, enter the details manually.", true);
     });
 }
-//extra fields are matched by name, so only fields the admin has defined can be filled.
-function getExtraFieldInput(name) {
-    return $(".modal.fade.show").find(".extra-field input").filter(function () {
-        return $(this).attr("placeholder") == name;
-    }).first();
+function getVehicleSpecs() {
+    return $("#vehicleSpecs .spec-field").map(function () {
+        return { name: $(this).children("label").text(), value: $(this).find("input").val().trim() };
+    }).get().filter(function (spec) { return spec.value != ''; });
+}
+function buildSpecField(name, value) {
+    var field = $("<div class='spec-field'>");
+    field.append($("<label>").text(name));
+    field.append($("<input type='text' class='form-control'>").attr("placeholder", name).val(value));
+    return field;
+}
+//rebuilds the spec inputs for the selected vehicle kind, keeping every value that has been entered.
+function refreshSpecFields(callback) {
+    $.getJSON('/Vehicle/GetSpecPreset', { motorcycle: isMotorcycleLookup() }, function (names) {
+        var entered = {};
+        var extras = [];
+        getVehicleSpecs().forEach(function (spec) {
+            entered[spec.name] = spec.value;
+        });
+        var container = $("#vehicleSpecs").empty();
+        names.forEach(function (name) {
+            container.append(buildSpecField(name, entered[name] || ''));
+        });
+        Object.keys(entered).filter(function (name) { return names.indexOf(name) < 0; }).forEach(function (name) {
+            container.append(buildSpecField(name, entered[name]));
+        });
+        if (callback) { callback(); }
+    });
+}
+function setSpecValue(name, value) {
+    $("#vehicleSpecs .spec-field input").filter(function () { return $(this).attr("placeholder") == name; }).first().val(value);
+    $("#collapseSpecs").collapse('show');
 }
 function renderVinReview(decoded) {
     var engine = [];
@@ -78,10 +106,9 @@ function renderVinReview(decoded) {
         { label: "Model", value: decoded.model, current: $("#inputModel").val(), apply: function (v) { $("#inputModel").val(v); } },
         { label: "Fuel Type", value: decoded.fuelType, current: $("#inputFuelType").val(), apply: function (v) { $("#inputFuelType").val(v); } }
     ];
-    [["Trim", decoded.trim], ["Engine", engine.join(", ")], ["Body Class", decoded.bodyClass], ["Transmission", decoded.transmission], ["Cooling", decoded.cooling], ["Drive Type", decoded.driveType]].forEach(function (pair) {
-        var input = getExtraFieldInput(pair[0]);
-        if (input.length > 0 && pair[1]) {
-            rows.push({ label: pair[0] + " (extra field)", value: pair[1], current: input.val(), apply: function (v) { input.val(v); } });
+    [["Trim", decoded.trim], ["Engine", engine.join(", ")], ["Transmission", decoded.transmission], ["Drive Type", decoded.driveType]].forEach(function (pair) {
+        if (pair[1]) {
+            rows.push({ label: pair[0] + " (spec)", value: pair[1], current: $("#vehicleSpecs .spec-field input").filter(function () { return $(this).attr("placeholder") == pair[0]; }).first().val(), apply: function (v) { setSpecValue(pair[0], v); } });
         }
     });
     var review = $("#vinLookupReview").empty().removeClass("d-none");
@@ -100,15 +127,18 @@ function renderVinReview(decoded) {
     });
     review.append(table);
     var apply = $("<button type='button' class='btn btn-sm btn-primary me-1'>").text("Apply").on("click", function () {
-        review.find("input[type=checkbox]:checked").each(function () {
-            var row = rows[parseInt($(this).attr("data-row"))];
-            row.apply(row.value);
-        });
+        var checked = review.find("input[type=checkbox]:checked").map(function () {
+            return rows[parseInt($(this).attr("data-row"))];
+        }).get();
         $("#inputLookupMotorcycle").prop("checked", decoded.isMotorcycle);
         $("#inputVin").val(decoded.vin);
-        loadMakeSuggestions();
-        loadModelSuggestions();
-        review.addClass("d-none").empty();
+        //spec inputs depend on the vehicle kind, so they are rebuilt before the values are applied.
+        refreshSpecFields(function () {
+            checked.forEach(function (row) { row.apply(row.value); });
+            loadMakeSuggestions();
+            loadModelSuggestions();
+            review.addClass("d-none").empty();
+        });
     });
     var dismiss = $("<button type='button' class='btn btn-sm btn-secondary'>").text("Dismiss").on("click", function () {
         review.addClass("d-none").empty();

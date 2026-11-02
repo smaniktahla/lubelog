@@ -1,0 +1,29 @@
+@using CarCareTracker.Helper
+@model Vehicle
+@inject IConfigHelper config
+@inject ITranslationHelper translator
+@{
+    var userLanguage = config.GetUserConfig(User).UserLanguage;
+    var specs = VehicleSpecPresets.Merge(Model.Specs, Model.IsMotorcycle);
+    var hasSpecs = Model.Specs.Any(x => !string.IsNullOrWhiteSpace(x.Value));
+}
+<div class="accordion accordion-flush" id="vehicleModalSpecsAccordion">
+    <div class="accordion-item">
+        <div class="accordion-header">
+            <button class="accordion-button skinny @(hasSpecs ? "" : "collapsed")" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSpecs">
+                @translator.Translate(userLanguage, "Maintenance Specs")
+            </button>
+        </div>
+        <div id="collapseSpecs" class="accordion-collapse collapse @(hasSpecs ? "show" : "")">
+            <div id="vehicleSpecs">
+                @foreach (var spec in specs)
+                {
+                    <div class="spec-field">
+                        <label>@spec.Name</label>
+                        <input type="text" class="form-control" placeholder="@spec.Name" value="@spec.Value">
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

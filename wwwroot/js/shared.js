@@ -218,6 +218,8 @@ function saveVehicle(isEdit) {
         model: vehicleModel,
         licensePlate: vehicleLicensePlate,
         vin: vehicleVin,
+        isMotorcycle: $("#inputLookupMotorcycle").is(":checked"),
+        specs: getVehicleSpecs(),
         isElectric: vehicleIsElectric,
         isDiesel: vehicleIsDiesel,
         tags: vehicleTags,

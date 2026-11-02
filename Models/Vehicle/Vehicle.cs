@@ -12,6 +12,11 @@ namespace CarCareTracker.Models
         public string Model { get; set; } = string.Empty;
         public string LicensePlate { get; set; } = string.Empty;
         public string Vin { get; set; } = string.Empty;
+        public bool IsMotorcycle { get; set; } = false;
+        /// <summary>
+        /// Maintenance specs (oil, filters, tires...). Separate from ExtraFields, which only keeps fields defined globally by the admin.
+        /// </summary>
+        public List<ExtraField> Specs { get; set; } = new List<ExtraField>();
         [JsonConverter(typeof(FromDateOptional))]
         public string PurchaseDate { get; set; } = string.Empty;
         [JsonConverter(typeof(FromDateOptional))]

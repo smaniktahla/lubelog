@@ -97,6 +97,10 @@ Replaces nothing; adds a "Quick add" path in the add-vehicle modal:
 - Public repo: no API keys or personal vehicle data committed; endpoints via environment variables.
 
 ## Decisions
+- **Specs live in `Vehicle.Specs` (revised in PR 3), not `ExtraFields`.** LubeLogger prunes a vehicle's extra
+  fields to the admin's global definitions on edit (`StaticHelper.AddExtraFields`), so per-vehicle-type fields
+  (chain, sprockets on a bike; none on a car) cannot be stored there. `Vehicle.Specs` is a `List<ExtraField>`
+  with no global template; `Vehicle.IsMotorcycle` selects the preset (`Helper/VehicleSpecPresets.cs`).
 - VIN is a first-class `Vehicle.Vin` field.
 - Manual input accepts PDF upload and pasted text.
 - Motorcycle item list: chain, sprockets, valve clearance, fork oil, coolant, air filter, oil filter,
