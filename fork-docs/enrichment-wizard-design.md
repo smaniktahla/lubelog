@@ -21,9 +21,12 @@ year/make/model) auto-populates basic data and maintenance specs, and the garage
 
 ## Design decisions
 
+0. **VIN is a real field: `Vehicle.Vin`** (decided). One additive property plus one modal input. Validated
+   (17 chars, check digit, upper-case, no I/O/Q), always present, anchors decode/re-decode and duplicate detection.
+   Verify Postgres storage compatibility in PR 1.
 1. **Store specs in `Vehicle.ExtraFields`, not a new model.** Zero schema change for LiteDB and Postgres,
    already in the API, import/export, edit modal and backups. The wizard writes fields with reserved names:
-   `VIN`, `Trim`, `Engine`, `Oil Spec`, `Oil Capacity`, `Oil Filter`, `Air Filter`, `Tire Size (Front)`,
+   `Trim`, `Engine`, `Oil Spec`, `Oil Capacity`, `Oil Filter`, `Air Filter`, `Tire Size (Front)`,
    `Tire Size (Rear)`, `Coolant`, `Brake Fluid`. Cost: values are strings. If we later need typed or
    queryable specs, migrate to a `Specs` dictionary on `Vehicle` (decide after phase 2).
 2. **Provenance per field.** Alongside each enriched value keep a source marker (`decoded` = NHTSA,
@@ -49,7 +52,8 @@ year/make/model) auto-populates basic data and maintenance specs, and the garage
 - Failure mode: timeout/5xx -> wizard falls back to manual entry with a notice. Never blocks saving.
 
 ### 2. Maintenance spec drafting (LLM, optional)
-- Input: decoded vehicle + optional owner's-manual text/PDF. Output: strict JSON of the spec fields above.
+- Input: decoded vehicle + optional owner's-manual **PDF upload and/or pasted text** (decided: both). PDF text is
+  extracted server-side; a PDF with no text layer (scanned) is flagged, no OCR in v1. Output: strict JSON of the spec fields above.
 - Runs on a local model (AI2, OpenAI-compatible endpoint configured via env: `ENRICH_LLM_URL`, `ENRICH_LLM_MODEL`;
   feature is off when unset, so upstream-style deployments are unaffected).
 - Every drafted value is marked `drafted` and requires an explicit confirm in the review step. Prompt must say
@@ -60,7 +64,8 @@ Replaces nothing; adds a "Quick add" path in the add-vehicle modal:
 1. **Identify:** VIN box (or Year/Make/Model typeahead, or "Motorcycle" toggle) -> Lookup.
 2. **Review:** table of proposed values with source badges, editable inline; drafted rows highlighted.
 3. **Save:** fills the existing modal fields and extra fields, then the normal `saveVehicle()` runs.
-   Motorcycle preset sets `UseHours` off, tire front/rear, chain/sprocket and valve-check fields,
+   Motorcycle preset sets `UseHours` off and adds: Chain, Front/Rear Sprocket, Valve Clearance, Fork Oil,
+   Coolant, Air Filter, Oil Filter, Spark Plugs, Battery (form factor + capacity), Tire Size Front/Rear,
    and seeds default reminders (oil, chain, tires).
 
 ### 4. "Last changed / serviced"
@@ -91,9 +96,13 @@ Replaces nothing; adds a "Quick add" path in the add-vehicle modal:
   `/home/salil/backups/`.
 - Public repo: no API keys or personal vehicle data committed; endpoints via environment variables.
 
+## Decisions
+- VIN is a first-class `Vehicle.Vin` field.
+- Manual input accepts PDF upload and pasted text.
+- Motorcycle item list: chain, sprockets, valve clearance, fork oil, coolant, air filter, oil filter,
+  spark plugs, battery form factor + capacity (plus tires).
+
 ## Open questions
-1. Postgres: does the production instance use LiteDB (it does today) — keep Postgres compatibility anyway for upstream PRs?
-2. Is a VIN stored as an extra field acceptable, or do we want a first-class `Vin` property (needs a model change in both DB backends)?
-3. Owner's-manual ingestion: upload PDF in the wizard, or paste text only for v1?
-4. Motorcycle defaults: confirm the item list (chain, sprockets, valve clearance, fork oil, coolant).
-5. Verify before building: that vPIC's motorcycle VIN decode returns usable engine/trim data for the bikes you own.
+1. Keep Postgres compatibility for upstream PRs (production uses LiteDB)?
+2. OCR for scanned manuals: later phase?
+3. Test fixtures: use sanitized vPIC responses (dummy VIN) for a car and a motorcycle; never commit real VINs.
