@@ -1,0 +1,38 @@
+@using CarCareTracker.Helper
+@model List<SpecHistoryItem>
+@inject IConfigHelper config
+@inject ITranslationHelper translator
+@{
+    var userLanguage = config.GetUserConfig(User).UserLanguage;
+}
+@if (Model.Any())
+{
+    <div class="border rounded p-2">
+        <div class="fw-bold mb-1">@translator.Translate(userLanguage, "Maintenance Specs")</div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>@translator.Translate(userLanguage, "Item")</th>
+                        <th>@translator.Translate(userLanguage, "Spec")</th>
+                        <th>@translator.Translate(userLanguage, "Last Changed")</th>
+                        <th>@translator.Translate(userLanguage, "Odometer")</th>
+                        <th>@translator.Translate(userLanguage, "Since")</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Name</td>
+                            <td>@item.Value</td>
+                            <td title="@item.LastDescription">@(item.HasHistory ? item.LastDate.ToShortDateString() : "")</td>
+                            <td>@(item.HasHistory && item.LastMileage > 0 ? item.LastMileage.ToString("N0") : "")</td>
+                            <td>@(item.DistanceSince > 0 ? item.DistanceSince.ToString("N0") : "")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
