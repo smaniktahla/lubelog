@@ -51,6 +51,7 @@
                             <!option value="@field.Name" @(Model.VehicleIdentifier == field.Name ? "selected" : "")>@field.Name</!option>
                         }
                     </select>
+                    @await Html.PartialAsync("_VehicleSpecs")
                 </div>
                 <div class="col-12 col-md-6">
                     <label for="inputFuelType">@translator.Translate(userLanguage, "Fuel Type")</label>

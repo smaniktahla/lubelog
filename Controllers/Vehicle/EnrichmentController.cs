@@ -1,3 +1,4 @@
+using CarCareTracker.Helper;
 using CarCareTracker.Logic;
 using CarCareTracker.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,11 @@ namespace CarCareTracker.Controllers
             var enrichmentLogic = HttpContext.RequestServices.GetRequiredService<IVehicleEnrichmentLogic>();
             var result = await enrichmentLogic.DecodeVin(vin);
             return Json(result);
+        }
+        [HttpGet]
+        public IActionResult GetSpecPreset(bool motorcycle = false)
+        {
+            return Json(VehicleSpecPresets.GetFieldNames(motorcycle));
         }
         [HttpGet]
         public async Task<IActionResult> GetMakes(bool motorcycle = false)
