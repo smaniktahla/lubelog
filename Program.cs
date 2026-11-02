@@ -111,6 +111,7 @@ builder.Services.AddSingleton<ILoginLogic, LoginLogic>();
 builder.Services.AddSingleton<IUserLogic, UserLogic>();
 builder.Services.AddSingleton<IOdometerLogic, OdometerLogic>();
 builder.Services.AddSingleton<IVehicleLogic, VehicleLogic>();
+builder.Services.AddSingleton<IVehicleEnrichmentLogic, VehicleEnrichmentLogic>();
 builder.Services.AddSingleton<INotificationLogic, NotificationLogic>();
 
 //configure automated event logic

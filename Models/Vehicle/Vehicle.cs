@@ -11,6 +11,7 @@ namespace CarCareTracker.Models
         public string Make { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
         public string LicensePlate { get; set; } = string.Empty;
+        public string Vin { get; set; } = string.Empty;
         [JsonConverter(typeof(FromDateOptional))]
         public string PurchaseDate { get; set; } = string.Empty;
         [JsonConverter(typeof(FromDateOptional))]
