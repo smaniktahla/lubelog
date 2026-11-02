@@ -9,6 +9,8 @@ namespace CarCareTracker.Logic
     public interface IVehicleEnrichmentLogic
     {
         Task<OperationResponse> DecodeVin(string vin);
+        Task<OperationResponse> GetMakes(bool motorcycle);
+        Task<OperationResponse> GetModels(string make, int year, bool motorcycle);
     }
     /// <summary>
     /// Decodes VINs through the free NHTSA vPIC API. Override the endpoint with VPIC_BASE_URL.
@@ -41,10 +43,7 @@ namespace CarCareTracker.Logic
             }
             try
             {
-                var baseUrl = (_config["VPIC_BASE_URL"] ?? DefaultBaseUrl).TrimEnd('/');
-                using var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(10);
-                var json = await client.GetStringAsync($"{baseUrl}/DecodeVinValues/{vin}?format=json");
+                var json = await GetVpicJson($"DecodeVinValues/{vin}?format=json");
                 var result = ParseVpicResponse(vin, json);
                 if (result == null)
                 {
@@ -59,6 +58,77 @@ namespace CarCareTracker.Logic
                 _logger.LogError(ex, "VIN lookup failed");
                 return OperationResponse.Failed("VIN lookup is unavailable, enter the details manually");
             }
+        }
+        public async Task<OperationResponse> GetMakes(bool motorcycle)
+        {
+            var type = motorcycle ? "motorcycle" : "car";
+            var cacheKey = $"makes_{type}";
+            if (_cache.TryGetValue(cacheKey, out List<string>? cached) && cached != null)
+            {
+                return OperationResponse.Succeed(string.Empty, cached);
+            }
+            try
+            {
+                var json = await GetVpicJson($"GetMakesForVehicleType/{type}?format=json");
+                var makes = ParseNames(json, "MakeName").Select(NormalizeMake).Distinct().OrderBy(x => x).ToList();
+                _cache.Set(cacheKey, makes, CacheDuration);
+                return OperationResponse.Succeed(string.Empty, makes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Make lookup failed");
+                return OperationResponse.Failed("Make lookup is unavailable");
+            }
+        }
+        public async Task<OperationResponse> GetModels(string make, int year, bool motorcycle)
+        {
+            make = (make ?? string.Empty).Trim();
+            if (make == string.Empty || year < 1900)
+            {
+                return OperationResponse.Failed("A make and a year after 1900 are required");
+            }
+            var type = motorcycle ? "/vehicletype/motorcycle" : string.Empty;
+            var cacheKey = $"models_{make.ToLowerInvariant()}_{year}_{type}";
+            if (_cache.TryGetValue(cacheKey, out List<string>? cached) && cached != null)
+            {
+                return OperationResponse.Succeed(string.Empty, cached);
+            }
+            try
+            {
+                var json = await GetVpicJson($"GetModelsForMakeYear/make/{Uri.EscapeDataString(make)}/modelyear/{year}{type}?format=json");
+                var models = ParseNames(json, "Model_Name").Distinct().OrderBy(x => x).ToList();
+                _cache.Set(cacheKey, models, CacheDuration);
+                return OperationResponse.Succeed(string.Empty, models);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Model lookup failed");
+                return OperationResponse.Failed("Model lookup is unavailable");
+            }
+        }
+        private async Task<string> GetVpicJson(string path)
+        {
+            var baseUrl = (_config["VPIC_BASE_URL"] ?? DefaultBaseUrl).TrimEnd('/');
+            using var client = _httpClientFactory.CreateClient();
+            client.Timeout = TimeSpan.FromSeconds(10);
+            return await client.GetStringAsync($"{baseUrl}/{path}");
+        }
+        public static List<string> ParseNames(string json, string property)
+        {
+            using var doc = JsonDocument.Parse(json);
+            var names = new List<string>();
+            if (!doc.RootElement.TryGetProperty("Results", out var results))
+            {
+                return names;
+            }
+            foreach (var row in results.EnumerateArray())
+            {
+                if (row.TryGetProperty(property, out var v) && v.ValueKind == JsonValueKind.String && !string.IsNullOrWhiteSpace(v.GetString()))
+                {
+                    names.Add(v.GetString()!.Trim());
+                }
+            }
+            return names;
         }
         /// <summary>
         /// Maps a vPIC DecodeVinValues response. Returns null when nothing usable was decoded.

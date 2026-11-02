@@ -1,0 +1,15 @@
+@using CarCareTracker.Helper
+@inject IConfigHelper config
+@inject ITranslationHelper translator
+@{
+    var userLanguage = config.GetUserConfig(User).UserLanguage;
+}
+<div id="vinLookupMessage" class="small d-none"></div>
+<div id="vinLookupReview" class="border rounded p-2 mb-2 d-none"></div>
+<div class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" id="inputLookupMotorcycle">
+    <label class="form-check-label" for="inputLookupMotorcycle">@translator.Translate(userLanguage, "Motorcycle (make/model suggestions)")</label>
+</div>
+<datalist id="vehicleMakeList"></datalist>
+<datalist id="vehicleModelList"></datalist>
+<script>initVehicleLookup();</script>

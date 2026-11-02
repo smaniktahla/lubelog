@@ -31,13 +31,17 @@
                     <label for="inputYear">@translator.Translate(userLanguage, "Year")</label>
                     <input type="number" inputmode="numeric" id="inputYear" class="form-control" placeholder="@translator.Translate(userLanguage, "Year(must be after 1900)")" value="@(isNew ? "" : Model.Year)">
                     <label for="inputMake">@translator.Translate(userLanguage, "Make")</label>
-                    <input type="text" id="inputMake" class="form-control" placeholder="@translator.Translate(userLanguage, "Make")" value="@Model.Make">
+                    <input type="text" id="inputMake" list="vehicleMakeList" autocomplete="off" class="form-control" placeholder="@translator.Translate(userLanguage, "Make")" value="@Model.Make">
                     <label for="inputModel">@translator.Translate(userLanguage, "Model")</label>
-                    <input type="text" id="inputModel" class="form-control" placeholder="@translator.Translate(userLanguage, "Model")" value="@Model.Model">
+                    <input type="text" id="inputModel" list="vehicleModelList" autocomplete="off" class="form-control" placeholder="@translator.Translate(userLanguage, "Model")" value="@Model.Model">
                     <label for="inputLicensePlate">@translator.Translate(userLanguage, "License Plate")</label>
                     <input type="text" id="inputLicensePlate" class="form-control" placeholder="@translator.Translate(userLanguage, "License Plate")" value="@Model.LicensePlate">
                     <label for="inputVin">@translator.Translate(userLanguage, "VIN")</label>
-                    <input type="text" id="inputVin" class="form-control" maxlength="17" placeholder="@translator.Translate(userLanguage, "VIN")" value="@Model.Vin">
+                    <div class="input-group">
+                        <input type="text" id="inputVin" class="form-control" maxlength="17" placeholder="@translator.Translate(userLanguage, "VIN")" value="@Model.Vin">
+                        <button type="button" class="btn btn-outline-primary" onclick="lookupVin()">@translator.Translate(userLanguage, "Lookup")</button>
+                    </div>
+                    @await Html.PartialAsync("_VehicleLookup")
                     @await Html.PartialAsync("_ExtraField", Model.ExtraFields)
                     <label for="inputIdentifier" class="@(!Model.ExtraFields.Any() ? "d-none" : "")">@translator.Translate(userLanguage, "Identifier")</label>
                     <select class="form-select @(!Model.ExtraFields.Any() ? "d-none" : "")" id="inputIdentifier" )>
