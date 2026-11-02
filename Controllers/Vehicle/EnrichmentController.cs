@@ -14,5 +14,17 @@ namespace CarCareTracker.Controllers
             var result = await enrichmentLogic.DecodeVin(vin);
             return Json(result);
         }
+        [HttpGet]
+        public async Task<IActionResult> GetMakes(bool motorcycle = false)
+        {
+            var enrichmentLogic = HttpContext.RequestServices.GetRequiredService<IVehicleEnrichmentLogic>();
+            return Json(await enrichmentLogic.GetMakes(motorcycle));
+        }
+        [HttpGet]
+        public async Task<IActionResult> GetModels(string make, int year, bool motorcycle = false)
+        {
+            var enrichmentLogic = HttpContext.RequestServices.GetRequiredService<IVehicleEnrichmentLogic>();
+            return Json(await enrichmentLogic.GetModels(make, year, motorcycle));
+        }
     }
 }

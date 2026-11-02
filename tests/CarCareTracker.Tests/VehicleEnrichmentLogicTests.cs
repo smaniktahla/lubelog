@@ -115,5 +115,39 @@ namespace CarCareTracker.Tests
             var result = await Build(Json("{\"Results\":[{\"Make\":\"\",\"Model\":\"\"}]}")).DecodeVin(CarVin);
             Assert.False(result.Success);
         }
+        [Fact]
+        public async Task GetMakes_NormalizesDedupesAndCaches()
+        {
+            var handler = Json("{\"Results\":[{\"MakeName\":\"HONDA\"},{\"MakeName\":\"BMW\"},{\"MakeName\":\"HONDA\"},{\"MakeName\":\"HARLEY-DAVIDSON\"}]}");
+            var logic = Build(handler);
+            var first = await logic.GetMakes(true);
+            await logic.GetMakes(true);
+            Assert.True(first.Success);
+            Assert.Equal(new List<string> { "BMW", "Harley-Davidson", "Honda" }, (List<string>)first.AdditionalData!);
+            Assert.Equal(1, handler.Calls);
+        }
+        [Fact]
+        public async Task GetModels_ReturnsSortedModels()
+        {
+            var handler = Json("{\"Results\":[{\"Model_Name\":\"Civic\"},{\"Model_Name\":\"Accord\"}]}");
+            var result = await Build(handler).GetModels("Honda", 2016, false);
+            Assert.Equal(new List<string> { "Accord", "Civic" }, (List<string>)result.AdditionalData!);
+        }
+        [Theory]
+        [InlineData("", 2016)]
+        [InlineData("Honda", 1800)]
+        public async Task GetModels_RejectsMissingInput(string make, int year)
+        {
+            var handler = Json("{}");
+            var result = await Build(handler).GetModels(make, year, false);
+            Assert.False(result.Success);
+            Assert.Equal(0, handler.Calls);
+        }
+        [Fact]
+        public async Task GetMakes_ServerError_FailsGracefully()
+        {
+            var handler = new StubHandler { Respond = () => new HttpResponseMessage(HttpStatusCode.BadGateway) };
+            Assert.False((await Build(handler).GetMakes(false)).Success);
+        }
     }
 }
