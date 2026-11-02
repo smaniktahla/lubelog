@@ -36,6 +36,8 @@
                     <input type="text" id="inputModel" class="form-control" placeholder="@translator.Translate(userLanguage, "Model")" value="@Model.Model">
                     <label for="inputLicensePlate">@translator.Translate(userLanguage, "License Plate")</label>
                     <input type="text" id="inputLicensePlate" class="form-control" placeholder="@translator.Translate(userLanguage, "License Plate")" value="@Model.LicensePlate">
+                    <label for="inputVin">@translator.Translate(userLanguage, "VIN")</label>
+                    <input type="text" id="inputVin" class="form-control" maxlength="17" placeholder="@translator.Translate(userLanguage, "VIN")" value="@Model.Vin">
                     @await Html.PartialAsync("_ExtraField", Model.ExtraFields)
                     <label for="inputIdentifier" class="@(!Model.ExtraFields.Any() ? "d-none" : "")">@translator.Translate(userLanguage, "Identifier")</label>
                     <select class="form-select @(!Model.ExtraFields.Any() ? "d-none" : "")" id="inputIdentifier" )>

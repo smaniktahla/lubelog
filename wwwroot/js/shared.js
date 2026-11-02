@@ -95,6 +95,7 @@ function saveVehicle(isEdit) {
     var vehiclePurchaseDate = $("#inputPurchaseDate").val();
     var vehicleSoldDate = $("#inputSoldDate").val();
     var vehicleLicensePlate = $("#inputLicensePlate").val();
+    var vehicleVin = $("#inputVin").val().trim().toUpperCase();
     var vehicleIsElectric = $("#inputFuelType").val() == 'Electric';
     var vehicleIsDiesel = $("#inputFuelType").val() == 'Diesel';
     var vehicleUseHours = $("#inputUseHours").is(":checked");
@@ -131,6 +132,12 @@ function saveVehicle(isEdit) {
         $("#inputModel").addClass("is-invalid");
     } else {
         $("#inputModel").removeClass("is-invalid");
+    }
+    if (vehicleVin != '' && !/^[A-HJ-NPR-Z0-9]{17}$/.test(vehicleVin)) {
+        hasError = true;
+        $("#inputVin").addClass("is-invalid");
+    } else {
+        $("#inputVin").removeClass("is-invalid");
     }
     if (vehicleIdentifier == "LicensePlate") {
         if (vehicleLicensePlate.trim() == '') {
@@ -210,6 +217,7 @@ function saveVehicle(isEdit) {
         make: vehicleMake,
         model: vehicleModel,
         licensePlate: vehicleLicensePlate,
+        vin: vehicleVin,
         isElectric: vehicleIsElectric,
         isDiesel: vehicleIsDiesel,
         tags: vehicleTags,
