@@ -44,5 +44,20 @@ namespace CarCareTracker.Tests
             Assert.Equal(VehicleSpecPresets.GetFieldNames(false).Count, merged.Count);
             Assert.All(merged, x => Assert.Equal(string.Empty, x.Value));
         }
+        [Fact]
+        public void GetSearchText_IncludesVinAndFilledSpecsOnly()
+        {
+            var text = VehicleSpecPresets.GetSearchText("WB10E8300R6J00000", new List<ExtraField> {
+                new ExtraField { Name = "Tire Size Front", Value = "120/70ZR17" },
+                new ExtraField { Name = "Chain", Value = "" } });
+            Assert.Contains("WB10E8300R6J00000", text);
+            Assert.Contains("Tire Size Front: 120/70ZR17", text);
+            Assert.DoesNotContain("Chain", text);
+        }
+        [Fact]
+        public void GetSearchText_NullSafe()
+        {
+            Assert.Equal(string.Empty, VehicleSpecPresets.GetSearchText(null, null));
+        }
     }
 }

@@ -82,6 +82,7 @@
                             <h5 class="garage-item-attribute card-title text-truncate">@($"{vehicle.Make}")</h5>
                             <h5 class="garage-item-attribute card-title text-truncate">@($"{vehicle.Model}")</h5>
                             <small class="garage-item-attribute card-text text-truncate">@StaticHelper.GetVehicleIdentifier(vehicle)</small>
+                            <small class="garage-item-attribute d-none">@VehicleSpecPresets.GetSearchText(vehicle.Vin, vehicle.Specs)</small>
                         </div>
                     </div>
                 </div>

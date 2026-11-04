@@ -91,7 +91,9 @@ namespace CarCareTracker.Controllers
                     ExtraFields = x.ExtraFields,
                     Tags = x.Tags,
                     DashboardMetrics = x.DashboardMetrics,
-                    VehicleIdentifier = x.VehicleIdentifier
+                    VehicleIdentifier = x.VehicleIdentifier,
+                    Vin = x.Vin,
+                    Specs = x.Specs
                 };
                 //dashboard metrics
                 if (x.DashboardMetrics.Any())

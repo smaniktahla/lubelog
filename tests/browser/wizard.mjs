@@ -76,6 +76,13 @@ if (saved) {
   await page.goto(`${base}/Vehicle/Index?vehicleId=${saved.id}&tab=report`);
   await page.waitForSelector('#vehicleSpecSummary table');
   check('dashboard shows the Maintenance Specs table', (await page.locator('#vehicleSpecSummary').innerText()).includes('Oil Filter'));
+  // garage search finds the vehicle by a spec value and by VIN, and not by an unrelated term
+  await page.goto(`${base}/Home/Index?tab=garage`);
+  await page.waitForSelector('.garage-item');
+  const visible = async term => { await page.evaluate(t => searchAndFilterGarage(undefined, t), term); return page.locator('.garage-item:not(.override-hide)').count(); };
+  check('garage search finds the vehicle by spec value', await visible('BRW-FILTER') === 1);
+  check('garage search finds the vehicle by VIN', await visible(vin.slice(0, 12)) === 1);
+  check('garage search ignores unrelated terms', await visible('zzz-no-match') === 0);
   await page.request.post(`${base}/Vehicle/DeleteVehicle?vehicleId=${saved.id}`);
   const after = await (await page.request.get(`${base}/api/vehicles`)).json();
   check('test vehicle cleaned up', !after.some(v => v.licensePlate === 'BRWTEST'));
