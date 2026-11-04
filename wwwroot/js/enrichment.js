@@ -145,3 +145,8 @@ function renderVinReview(decoded) {
     });
     review.append(apply, dismiss);
 }
+function loadVehicleSpecSummary(vehicleId) {
+    $.get(`/Vehicle/GetVehicleSpecSummary?vehicleId=${vehicleId}`, function (data) {
+        $("#vehicleSpecSummary").html(data);
+    });
+}

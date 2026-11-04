@@ -44,6 +44,7 @@ const moto = await page.isChecked('#inputLookupMotorcycle');
 labels = await specLabels(page);
 check('motorcycle VIN switches to the motorcycle preset', moto === labels.includes('Chain'), `moto=${moto}, ${labels.length} specs`);
 check('Engine spec filled from decode', (await page.inputValue('#vehicleSpecs input[placeholder="Engine"]')).length > 0);
+await page.waitForFunction(() => document.querySelectorAll('#vehicleMakeList option').length > 100 && document.querySelectorAll('#vehicleModelList option').length > 0, null, { timeout: 15000 }).catch(() => {});
 check('make/model suggestions loaded', await page.locator('#vehicleMakeList option').count() > 100 && await page.locator('#vehicleModelList option').count() > 0);
 
 // save, reopen, verify
@@ -60,6 +61,21 @@ if (saved) {
   check('VIN persisted', await page.inputValue('#inputVin') === vin.toUpperCase());
   check('spec persisted', await page.inputValue('#vehicleSpecs input[placeholder="Oil Filter"]') === 'BRW-FILTER');
   check('motorcycle flag persisted', await page.isChecked('#inputLookupMotorcycle') === moto);
+  // last-changed summary: add an oil change through the API, then read the dashboard summary
+  const add = await page.request.post(`${base}/api/vehicle/servicerecords/add?vehicleId=${saved.id}`, {
+    data: { date: '2026-03-04', odometer: '15000', description: 'Oil change', notes: '', cost: '50' }
+  });
+  check('service record added via API', add.ok(), String(add.status()));
+  await page.request.post(`${base}/api/vehicle/odometerrecords/add?vehicleId=${saved.id}`, { data: { date: '2026-05-01', odometer: '17000', notes: '' } });
+  const summary = await (await page.request.get(`${base}/Vehicle/GetVehicleSpecSummary?vehicleId=${saved.id}`)).text();
+  const row = summary.replace(/\s+/g, ' ').match(/<tr> <td>Oil Filter<\/td>.*?<\/tr>/)?.[0] ?? '';
+  check('summary shows Oil Filter last changed with odometer', row.includes('BRW-FILTER') && row.includes('15,000'), row.replace(/<[^>]+>/g, ' ').trim());
+  check('summary shows distance since change', row.includes('2,000'));
+  check('Engine spec listed without history', /<td>Engine<\/td>/.test(summary));
+  // dashboard actually renders the summary
+  await page.goto(`${base}/Vehicle/Index?vehicleId=${saved.id}&tab=report`);
+  await page.waitForSelector('#vehicleSpecSummary table');
+  check('dashboard shows the Maintenance Specs table', (await page.locator('#vehicleSpecSummary').innerText()).includes('Oil Filter'));
   await page.request.post(`${base}/Vehicle/DeleteVehicle?vehicleId=${saved.id}`);
   const after = await (await page.request.get(`${base}/api/vehicles`)).json();
   check('test vehicle cleaned up', !after.some(v => v.licensePlate === 'BRWTEST'));

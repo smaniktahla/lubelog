@@ -19,6 +19,10 @@
             @await Html.PartialAsync("Report/_ReportHeader", Model.ReportHeaderForVehicle)
     </div>
     <hr />
+    <div class="row hideOnPrint mb-2">
+        <div class="col-12" id="vehicleSpecSummary"></div>
+    </div>
+    <script>loadVehicleSpecSummary(GetVehicleId().vehicleId);</script>
     <div class="row hideOnPrint flex-wrap gap-1">
         <div class="col-md-3 col-12 border rounded">
             <div class="row pt-1">

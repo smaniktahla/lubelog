@@ -1,3 +1,4 @@
+using CarCareTracker.Filter;
 using CarCareTracker.Helper;
 using CarCareTracker.Logic;
 using CarCareTracker.Models;
@@ -14,6 +15,19 @@ namespace CarCareTracker.Controllers
             var enrichmentLogic = HttpContext.RequestServices.GetRequiredService<IVehicleEnrichmentLogic>();
             var result = await enrichmentLogic.DecodeVin(vin);
             return Json(result);
+        }
+        [TypeFilter(typeof(CollaboratorFilter))]
+        [HttpGet]
+        public IActionResult GetVehicleSpecSummary(int vehicleId)
+        {
+            var vehicle = _dataAccess.GetVehicleById(vehicleId);
+            var records = _vehicleLogic.GetVehicleRecords(vehicleId);
+            var currentMileage = _odometerLogic.GetLastOdometerRecordMileage(vehicleId, records.OdometerRecords);
+            var history = records.ServiceRecords.Cast<GenericRecord>()
+                .Concat(records.CollisionRecords)
+                .Concat(records.UpgradeRecords);
+            var items = SpecHistoryLogic.Build(VehicleSpecPresets.Merge(vehicle.Specs, vehicle.IsMotorcycle), history, currentMileage);
+            return PartialView("_VehicleSpecSummary", items);
         }
         [HttpGet]
         public IActionResult GetSpecPreset(bool motorcycle = false)
