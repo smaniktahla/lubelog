@@ -16,6 +16,8 @@
         public List<ExtraField> ExtraFields { get; set; } = new List<ExtraField>();
         public List<string> Tags { get; set; } = new List<string>();
         public string VehicleIdentifier { get; set; } = "LicensePlate";
+        public string Vin { get; set; } = string.Empty;
+        public List<ExtraField> Specs { get; set; } = new List<ExtraField>();
         //Dashboard Metric Attributes
         public List<DashboardMetric> DashboardMetrics { get; set; } = new List<DashboardMetric>();
         public int LastReportedMileage { get; set; }

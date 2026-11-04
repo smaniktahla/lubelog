@@ -24,6 +24,19 @@ namespace CarCareTracker.Helper
             return (motorcycle ? Motorcycle : Car).ToList();
         }
         /// <summary>
+        /// Hidden text on each garage card so the existing garage search also finds VINs and spec values ("120/70ZR17", "HF160", "Oil Filter").
+        /// </summary>
+        public static string GetSearchText(string? vin, List<ExtraField>? specs)
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(vin))
+            {
+                parts.Add(vin);
+            }
+            parts.AddRange((specs ?? new List<ExtraField>()).Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => $"{x.Name}: {x.Value}"));
+            return string.Join("; ", parts);
+        }
+        /// <summary>
         /// Preset fields first (keeping saved values), then any saved fields that are not in the preset.
         /// </summary>
         public static List<ExtraField> Merge(List<ExtraField>? saved, bool motorcycle)
